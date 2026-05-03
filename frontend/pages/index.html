@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="INSAT Events — Discover and join the best student events at INSAT." />
+  <title>INSAT Events — Home</title>
+  <link rel="stylesheet" href="../styles/main.css" />
+  <link rel="stylesheet" href="../styles/components.css" />
+  <link rel="stylesheet" href="../styles/layout.css" />
+  <style>
+    /* ── Hero gradient mesh ── */
+    .hero-mesh {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 700px 500px at 70% -10%, rgba(26,86,232,.07) 0%, transparent 60%),
+        radial-gradient(ellipse 500px 400px at -5% 60%, rgba(245,75,100,.06) 0%, transparent 60%);
+    }
+
+    /* ── Stats separator ── */
+    .hero-stat + .hero-stat {
+      padding-left: 2rem;
+      border-left: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body data-page="home">
+  <div id="progress-bar"></div>
+
+  <!-- ════════════════════════════════
+       NAVBAR
+  ════════════════════════════════ -->
+  <nav class="navbar" role="navigation" aria-label="Main">
+    <div class="container navbar-inner">
+      <!-- Logo -->
+      <a href="index.html" class="navbar-logo" aria-label="INSAT Events home">
+        <div class="navbar-logo-mark">IE</div>
+        <span class="navbar-logo-text">INSAT <span>Events</span></span>
+      </a>
+
+      <!-- Burger (mobile) -->
+      <button class="nav-burger" aria-label="Open menu" aria-expanded="false">☰</button>
+
+      <!-- Nav links -->
+      <ul class="navbar-nav" role="list">
+        <li><a href="index.html" class="nav-link active">Home</a></li>
+
+        <!-- Logged-out links -->
+        <li data-auth="logged-out"><a href="login.html" class="nav-link">Sign In</a></li>
+        <li data-auth="logged-out">
+          <a href="register.html" class="btn btn-primary btn-sm">Register Free</a>
+        </li>
+
+        <!-- Logged-in links -->
+        <li data-auth="logged-in" style="display:none">
+          <a href="my-events.html" class="nav-link">My Events</a>
+        </li>
+        <li data-auth="logged-in" style="display:none">
+          <div class="nav-points">
+            <span class="nav-points-icon">⭐</span>
+            <span id="nav-points-count">0</span> pts
+          </div>
+        </li>
+        <li data-auth="logged-in" style="display:none">
+          <div class="nav-avatar" aria-label="Account menu">–</div>
+        </li>
+
+        <!-- Theme toggle (always visible) -->
+        <li>
+          <button class="theme-toggle" aria-label="Toggle dark mode">🌙</button>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <main>
+    <!-- ════════════════════════════════
+         HERO
+    ════════════════════════════════ -->
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-mesh"></div>
+      <div class="container" style="position:relative;z-index:1">
+        <div class="hero-label">
+          <span>🎓</span> INSAT Student Events Platform
+        </div>
+
+        <h1 class="hero-title" id="hero-title">
+          Discover what's happening at <em>INSAT</em>
+        </h1>
+
+        <p class="hero-desc">
+          From tech summits to cultural nights — find, register, and attend the
+          events that shape your student journey. All in one place.
+        </p>
+
+        <div class="hero-actions">
+          <a href="#events" class="btn btn-primary btn-lg">
+            Explore Events →
+          </a>
+          <a href="register.html" class="btn btn-ghost btn-lg" data-auth="logged-out">
+            Create Free Account
+          </a>
+          <a href="my-events.html" class="btn btn-secondary btn-lg" data-auth="logged-in" style="display:none">
+            My Tickets 🎟️
+          </a>
+        </div>
+
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <div class="hero-stat-value">24+</div>
+            <div class="hero-stat-label">Events this semester</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-value">12</div>
+            <div class="hero-stat-label">Active clubs</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-value">3,200+</div>
+            <div class="hero-stat-label">Student attendees</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════
+         RECOMMENDED (logged-in)
+    ════════════════════════════════ -->
+    <section class="page-section" data-auth="logged-in" style="display:none">
+      <div class="container">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">Recommended <span>for you</span></h2>
+            <p class="section-subtitle">Curated based on your academic year and interests</p>
+          </div>
+          <a href="#events" class="section-link">See all →</a>
+        </div>
+        <div class="events-row" id="recommended-row" role="list">
+          <!-- Populated by app.js -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════
+         ALL EVENTS
+    ════════════════════════════════ -->
+    <section class="page-section" id="events" aria-labelledby="events-heading">
+      <div class="container">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title" id="events-heading">Upcoming <span>Events</span></h2>
+            <p class="section-subtitle">All student events at INSAT, updated in real time</p>
+          </div>
+        </div>
+
+        <!-- Toolbar: search + filter chips -->
+        <div class="toolbar" role="search">
+          <div class="search-bar">
+            <span class="search-icon" aria-hidden="true">🔍</span>
+            <input
+              type="search"
+              placeholder="Search events or clubs…"
+              aria-label="Search events"
+            />
+          </div>
+          <div class="filter-chips" role="group" aria-label="Filter by category">
+            <button class="chip active" data-filter="all">All</button>
+            <button class="chip" data-filter="Technology">Technology 💻</button>
+            <button class="chip" data-filter="Workshop">Workshop 🛠️</button>
+            <button class="chip" data-filter="Cultural">Cultural 🎭</button>
+            <button class="chip" data-filter="Arts">Arts 🎨</button>
+            <button class="chip" data-filter="Entrepreneurship">Business 💼</button>
+          </div>
+        </div>
+
+        <!-- Events Grid -->
+        <div class="events-grid" id="events-grid" role="list" aria-live="polite" aria-label="Event listings">
+          <!-- Populated by app.js -->
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ════════════════════════════════
+       FOOTER
+  ════════════════════════════════ -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <span>© 2025 INSAT Events Platform</span>
+      <nav class="footer-links" aria-label="Footer">
+        <a href="#">About</a>
+        <a href="#">Contact</a>
+        <a href="#">Privacy</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="../scripts/api.js"></script>
+  <script src="../scripts/auth.js"></script>
+  <script src="../scripts/app.js"></script>
+</body>
+</html>

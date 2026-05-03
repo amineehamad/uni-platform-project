@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign In — INSAT Events</title>
+  <link rel="stylesheet" href="../styles/main.css" />
+  <link rel="stylesheet" href="../styles/components.css" />
+  <link rel="stylesheet" href="../styles/layout.css" />
+  <style>
+    body { overflow-x: hidden; }
+
+    /* Animated gradient on left panel */
+    @keyframes panelShift {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .auth-panel-left {
+      background: linear-gradient(-45deg, #0d1f4e, #1a56e8, #f54b64, #8b1a3c);
+      background-size: 400% 400%;
+      animation: panelShift 12s ease infinite;
+    }
+
+    /* Floating blobs */
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(60px);
+      pointer-events: none;
+      opacity: 0.25;
+    }
+
+    /* "Remember me" toggle */
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      user-select: none;
+    }
+    .checkbox-label input[type="checkbox"] { accent-color: var(--brand-primary); width: 15px; height: 15px; }
+  </style>
+</head>
+<body data-page="login">
+
+  <div class="auth-layout">
+    <!-- LEFT PANEL -->
+    <div class="auth-panel-left">
+      <div class="auth-panel-left-noise"></div>
+
+      <!-- Blobs -->
+      <div class="blob" style="width:350px;height:350px;background:#f54b64;top:-10%;right:-15%"></div>
+      <div class="blob" style="width:250px;height:250px;background:#1a56e8;bottom:10%;left:-10%"></div>
+
+      <!-- Logo -->
+      <a href="index.html" style="display:flex;align-items:center;gap:10px;text-decoration:none;position:relative;z-index:1;margin-bottom:auto">
+        <div class="navbar-logo-mark">IE</div>
+        <span style="font-family:'DM Serif Display',serif;color:#fff;font-size:1rem">INSAT <span style="opacity:.7">Events</span></span>
+      </a>
+
+      <div class="auth-panel-left-content" style="position:relative;z-index:1">
+        <blockquote class="auth-panel-left-quote">
+          Good to have you back. Something great is waiting.
+        </blockquote>
+        <p class="auth-panel-left-sub">
+          Sign in to see your registered events, download QR tickets, check your
+          INSAT Club Points, and register for upcoming experiences.
+        </p>
+        <div class="auth-panel-left-badges" style="margin-top:1.5rem">
+          <span class="auth-panel-left-badge">🎟️ Your Tickets</span>
+          <span class="auth-panel-left-badge">⭐ Your Points</span>
+          <span class="auth-panel-left-badge">📅 Your Calendar</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="auth-panel-right">
+      <div class="auth-panel-right-inner">
+
+        <div class="auth-card">
+          <div class="auth-header">
+            <h1 class="auth-title">Welcome back</h1>
+            <p class="auth-subtitle">Sign in to your INSAT Events account</p>
+          </div>
+
+          <form id="login-form" novalidate autocomplete="on">
+
+            <!-- Email -->
+            <div class="form-group" style="margin-bottom:1rem">
+              <label class="form-label" for="email">Email Address</label>
+              <input
+                class="form-input"
+                type="email"
+                id="email"
+                name="email"
+                placeholder="you@insat.ucar.tn"
+                autocomplete="email"
+                required
+              />
+              <span class="form-error" aria-live="polite"></span>
+            </div>
+
+            <!-- Password -->
+            <div class="form-group" style="margin-bottom:0.75rem">
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <label class="form-label" for="password">Password</label>
+                <a href="#" style="font-size:.78rem;color:var(--brand-primary)">Forgot password?</a>
+              </div>
+              <div class="form-input-wrap">
+                <input
+                  class="form-input"
+                  type="password"
+                  id="password"
+                  name="password"
+                  placeholder="Your password"
+                  autocomplete="current-password"
+                  required
+                />
+                <button type="button" class="toggle-pw" aria-label="Show/hide password">👁️</button>
+              </div>
+              <span class="form-error" aria-live="polite"></span>
+            </div>
+
+            <!-- Remember me -->
+            <div style="margin-bottom:1.5rem">
+              <label class="checkbox-label">
+                <input type="checkbox" name="remember" id="remember" />
+                Keep me signed in
+              </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full btn-lg">
+              <div class="spinner"></div>
+              <span class="btn-text">Sign In</span>
+            </button>
+          </form>
+
+          <div class="auth-divider">or</div>
+
+          <!-- Quick demo login notice -->
+          <div style="background:var(--bg-muted);border:1px solid var(--border);border-radius:var(--r-md);padding:.875rem 1rem;margin-bottom:.5rem">
+            <p style="font-size:.78rem;color:var(--text-secondary);line-height:1.5">
+              <strong style="color:var(--text-primary)">🧪 Demo mode</strong><br/>
+              No backend? The app will fall back to mock data automatically.
+              Fill in any valid email/password format to test the UI.
+            </p>
+          </div>
+
+          <div class="auth-footer">
+            Don't have an account?
+            <a href="register.html">Create one free →</a>
+          </div>
+        </div>
+
+        <!-- Back home link -->
+        <p style="text-align:center;margin-top:1.25rem;font-size:.82rem">
+          <a href="index.html" style="color:var(--text-muted)">← Browse events without signing in</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script src="../scripts/api.js"></script>
+  <script src="../scripts/auth.js"></script>
+  <script src="../scripts/app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Redirect if already logged in
+      if (window.INSAT?.Auth?.isLoggedIn()) {
+        const redirect = new URLSearchParams(window.location.search).get('redirect') || 'index.html';
+        window.location.href = redirect;
+      }
+
+      // Demo login shortcut (development only)
+      const emailInput = document.getElementById('email');
+      const pwInput    = document.getElementById('password');
+      if (emailInput && !emailInput.value) {
+        emailInput.value = 'demo@insat.ucar.tn';
+        // Pre-fill triggers the mock path on submit
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Events — INSAT Events</title>
+  <link rel="stylesheet" href="../styles/main.css" />
+  <link rel="stylesheet" href="../styles/components.css" />
+  <link rel="stylesheet" href="../styles/layout.css" />
+  <style>
+    .level-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      background: rgba(245,166,35,.15);
+      border: 1px solid rgba(245,166,35,.3);
+      border-radius: var(--r-full);
+      font-size: .78rem;
+      font-weight: 700;
+      color: var(--brand-gold);
+    }
+    .achievement-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: var(--bg-muted);
+      border-radius: var(--r-md);
+      font-size: .82rem;
+    }
+    .tab-btn {
+      padding: 7px 16px;
+      border-radius: var(--r-full);
+      font-size: .85rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all var(--dur-fast);
+    }
+    .tab-btn.active {
+      background: var(--bg-surface);
+      border-color: var(--border);
+      color: var(--text-primary);
+      box-shadow: var(--shadow-xs);
+    }
+  </style>
+</head>
+<body data-page="my-events">
+  <div id="progress-bar"></div>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="container navbar-inner">
+      <a href="index.html" class="navbar-logo">
+        <div class="navbar-logo-mark">IE</div>
+        <span class="navbar-logo-text">INSAT <span>Events</span></span>
+      </a>
+      <button class="nav-burger" aria-label="Open menu" aria-expanded="false">☰</button>
+      <ul class="navbar-nav">
+        <li><a href="index.html" class="nav-link">Home</a></li>
+        <li><a href="my-events.html" class="nav-link active">My Events</a></li>
+        <li>
+          <div class="nav-points">
+            <span class="nav-points-icon">⭐</span>
+            <span id="nav-points-count">0</span> pts
+          </div>
+        </li>
+        <li><div class="nav-avatar" aria-label="Account">–</div></li>
+        <li><button class="theme-toggle" aria-label="Toggle dark mode">🌙</button></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main>
+    <div class="container">
+      <div class="my-events-layout">
+
+        <!-- ═══════════════════════════
+             SIDEBAR
+        ═══════════════════════════ -->
+        <aside class="my-events-sidebar">
+
+          <!-- Gamification Points Widget -->
+          <div class="points-widget">
+            <div class="level-badge">🏅 Level 2 · Explorer</div>
+            <div class="points-count" id="total-points" style="margin-top:.75rem">0</div>
+            <div class="points-label">INSAT Club Points</div>
+            <div class="points-progress-track">
+              <div class="points-progress-fill" style="width:0%"></div>
+            </div>
+            <p style="font-size:.72rem;color:rgba(245,166,35,.5);margin-top:.5rem">
+              Next level at 500 pts
+            </p>
+          </div>
+
+          <!-- Achievements -->
+          <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:1.1rem">
+            <h3 style="font-family:'DM Serif Display',serif;font-size:1rem;margin-bottom:.75rem">Achievements</h3>
+            <div style="display:flex;flex-direction:column;gap:.5rem">
+              <div class="achievement-chip">
+                <span style="font-size:1.1rem">🎯</span>
+                <div>
+                  <div style="font-weight:600;color:var(--text-primary)">First Timer</div>
+                  <div style="font-size:.72rem;color:var(--text-muted)">Registered for 1 event</div>
+                </div>
+              </div>
+              <div class="achievement-chip" style="opacity:.4">
+                <span style="font-size:1.1rem">🔥</span>
+                <div>
+                  <div style="font-weight:600;color:var(--text-primary)">On a Roll</div>
+                  <div style="font-size:.72rem;color:var(--text-muted)">Attend 3 events in a row</div>
+                </div>
+              </div>
+              <div class="achievement-chip" style="opacity:.4">
+                <span style="font-size:1.1rem">🌟</span>
+                <div>
+                  <div style="font-weight:600;color:var(--text-primary)">Club MVP</div>
+                  <div style="font-size:.72rem;color:var(--text-muted)">Earn 500+ points</div>
+                </div>
+              </div>
+              <div class="achievement-chip" style="opacity:.4">
+                <span style="font-size:1.1rem">🤝</span>
+                <div>
+                  <div style="font-weight:600;color:var(--text-primary)">Social Butterfly</div>
+                  <div style="font-size:.72rem;color:var(--text-muted)">Attend 5 different clubs</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick links -->
+          <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:1rem">
+            <a href="index.html" class="btn btn-secondary btn-full" style="margin-bottom:.5rem">
+              🔍 Browse More Events
+            </a>
+            <button class="btn btn-ghost btn-full btn-sm" data-action="logout">
+              Sign Out
+            </button>
+          </div>
+        </aside>
+
+        <!-- ═══════════════════════════
+             MAIN CONTENT
+        ═══════════════════════════ -->
+        <div>
+          <!-- Header -->
+          <div style="margin-bottom:1.5rem">
+            <h1 style="font-family:'DM Serif Display',serif;font-size:2rem;margin-bottom:.25rem">My Events</h1>
+            <p style="color:var(--text-secondary);font-size:.9rem">Your registered events, tickets, and history</p>
+          </div>
+
+          <!-- Tabs -->
+          <div style="display:flex;gap:.5rem;margin-bottom:1.5rem;background:var(--bg-muted);padding:4px;border-radius:var(--r-full);width:fit-content">
+            <button class="tab-btn active" data-tab="all">All</button>
+            <button class="tab-btn" data-tab="upcoming">Upcoming</button>
+            <button class="tab-btn" data-tab="past">Past</button>
+          </div>
+
+          <!-- Event list -->
+          <div class="ticket-list" id="my-events-list" aria-live="polite" aria-label="Your registered events">
+            <!-- Populated by app.js -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <span>© 2025 INSAT Events Platform</span>
+    </div>
+  </footer>
+
+  <script src="../scripts/api.js"></script>
+  <script src="../scripts/auth.js"></script>
+  <script src="../scripts/app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Guard
+      if (!window.INSAT.requireAuth('login.html')) return;
+
+      // Tab switching
+      document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.tab-btn[data-tab]').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          // Filter list items based on tab (simplified)
+          const tab = btn.dataset.tab;
+          document.querySelectorAll('.ticket-card').forEach(card => {
+            const badge = card.querySelector('.badge');
+            if (!badge) return;
+            const isUpcoming = badge.textContent.includes('Upcoming');
+            const isPast     = badge.textContent.includes('Attended');
+            if (tab === 'all')      card.style.display = '';
+            else if (tab === 'upcoming') card.style.display = isUpcoming ? '' : 'none';
+            else if (tab === 'past')     card.style.display = isPast ? '' : 'none';
+          });
+        });
+      });
+
+      // Sync points to nav badge
+      const observer = new MutationObserver(() => {
+        const pts = document.getElementById('total-points')?.textContent;
+        const navPts = document.getElementById('nav-points-count');
+        if (pts && navPts) navPts.textContent = pts;
+      });
+      const totalPtsEl = document.getElementById('total-points');
+      if (totalPtsEl) observer.observe(totalPtsEl, { childList: true, subtree: true });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Event Details — INSAT Events</title>
+  <link rel="stylesheet" href="../styles/main.css" />
+  <link rel="stylesheet" href="../styles/components.css" />
+  <link rel="stylesheet" href="../styles/layout.css" />
+  <style>
+    .detail-section + .detail-section { margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+    .club-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 1rem;
+      background: var(--bg-muted);
+      border-radius: var(--r-lg);
+    }
+    .club-card-logo {
+      width: 48px; height: 48px;
+      border-radius: var(--r-md);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem;
+      flex-shrink: 0;
+    }
+    .chat-cta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.25rem;
+      background: linear-gradient(135deg, rgba(26,86,232,.06), rgba(245,75,100,.04));
+      border: 1px solid rgba(26,86,232,.15);
+      border-radius: var(--r-lg);
+    }
+  </style>
+</head>
+<body data-page="event-detail">
+  <div id="progress-bar"></div>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="container navbar-inner">
+      <a href="index.html" class="navbar-logo">
+        <div class="navbar-logo-mark">IE</div>
+        <span class="navbar-logo-text">INSAT <span>Events</span></span>
+      </a>
+      <button class="nav-burger" aria-label="Open menu" aria-expanded="false">☰</button>
+      <ul class="navbar-nav">
+        <li><a href="index.html" class="nav-link">← All Events</a></li>
+        <li data-auth="logged-in" style="display:none">
+          <a href="my-events.html" class="nav-link">My Events</a>
+        </li>
+        <li data-auth="logged-out"><a href="login.html" class="nav-link">Sign In</a></li>
+        <li><button class="theme-toggle" aria-label="Toggle dark mode">🌙</button></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main>
+    <div class="container" id="event-detail-root">
+      <!-- Loading skeleton -->
+      <div style="padding:2rem 0">
+        <div class="skeleton" style="height:320px;border-radius:var(--r-xl);margin-bottom:2rem"></div>
+        <div class="event-detail-layout">
+          <div>
+            <div class="skeleton" style="height:32px;width:60%;margin-bottom:1rem"></div>
+            <div class="skeleton" style="height:18px;width:100%;margin-bottom:.5rem"></div>
+            <div class="skeleton" style="height:18px;width:80%;margin-bottom:.5rem"></div>
+            <div class="skeleton" style="height:18px;width:90%"></div>
+          </div>
+          <div class="skeleton" style="height:360px;border-radius:var(--r-xl)"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <span>© 2025 INSAT Events Platform</span>
+    </div>
+  </footer>
+
+  <script src="../scripts/api.js"></script>
+  <script src="../scripts/auth.js"></script>
+  <script src="../scripts/app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const params = new URLSearchParams(window.location.search);
+      const eventId = params.get('id') || 1;
+      const root = document.getElementById('event-detail-root');
+
+      try {
+        const res = await window.INSAT.getEvent(eventId);
+        const ev  = res?.data || res;
+
+        document.title = `${ev.title} — INSAT Events`;
+
+        const isFree  = ev.price === 0;
+        const isFull  = ev.seats_remaining === 0;
+        const seats   = window.INSAT.getSeatsStatus(ev.seats_remaining, ev.seats_total);
+
+        // Google Calendar URL
+        const gcalStart = new Date(ev.date).toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
+        const gcalEnd   = new Date(ev.end_date || ev.date).toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
+        const gcalUrl   = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(ev.title)}&dates=${gcalStart}/${gcalEnd}&details=${encodeURIComponent(ev.description)}&location=${encodeURIComponent(ev.location)}`;
+
+        root.innerHTML = `
+          <!-- Hero Banner -->
+          <div class="event-detail-hero" style="margin-top:2rem">
+            <img src="${ev.image}" alt="${ev.title}" loading="lazy"/>
+            <div class="event-detail-hero-overlay"></div>
+            <div class="event-detail-hero-content">
+              <div style="display:flex;gap:.5rem;margin-bottom:.75rem;flex-wrap:wrap">
+                <span class="badge badge-blue">${ev.category}</span>
+                <span class="badge price-badge ${isFree ? 'free' : 'paid'}">${isFree ? 'FREE' : ev.price + ' TND'}</span>
+                ${isFull ? '<span class="badge badge-red">Fully Booked</span>' : ''}
+              </div>
+              <h1 style="font-family:\'DM Serif Display\',serif;font-size:clamp(1.5rem,4vw,2.6rem);color:#fff;line-height:1.15;margin-bottom:.5rem;text-shadow:0 2px 12px rgba(0,0,0,.4)">${ev.title}</h1>
+              <p style="color:rgba(255,255,255,.8);font-size:.9rem">${ev.club}</p>
+            </div>
+          </div>
+
+          <!-- Body -->
+          <div class="event-detail-layout">
+            <!-- LEFT: Details -->
+            <div>
+              <!-- Description -->
+              <div class="detail-section">
+                <h2 style="font-family:\'DM Serif Display\',serif;font-size:1.4rem;margin-bottom:.75rem">About this event</h2>
+                <p style="color:var(--text-secondary);line-height:1.75;font-size:.95rem">${ev.description}</p>
+                ${ev.tags?.length ? `
+                  <div style="display:flex;gap:.5rem;margin-top:1rem;flex-wrap:wrap">
+                    ${ev.tags.map(t => `<span class="chip">${t}</span>`).join('')}
+                  </div>
+                ` : ''}
+              </div>
+
+              <!-- Event Info -->
+              <div class="detail-section">
+                <h2 style="font-family:\'DM Serif Display\',serif;font-size:1.4rem;margin-bottom:1rem">Event Details</h2>
+                <div class="info-list">
+                  <div class="info-item">
+                    <div class="info-item-icon">📅</div>
+                    <div class="info-item-body">
+                      <div class="info-item-label">Date & Time</div>
+                      <div class="info-item-value">${window.INSAT.formatDate(ev.date)} · ${window.INSAT.formatTime(ev.date)}</div>
+                    </div>
+                  </div>
+                  <div class="info-item">
+                    <div class="info-item-icon">📍</div>
+                    <div class="info-item-body">
+                      <div class="info-item-label">Location</div>
+                      <div class="info-item-value">${ev.location}</div>
+                    </div>
+                  </div>
+                  <div class="info-item">
+                    <div class="info-item-icon">🎫</div>
+                    <div class="info-item-body">
+                      <div class="info-item-label">Price</div>
+                      <div class="info-item-value">${isFree ? 'Free entry' : ev.price + ' TND'}</div>
+                    </div>
+                  </div>
+                  <div class="info-item">
+                    <div class="info-item-icon">🪑</div>
+                    <div class="info-item-body">
+                      <div class="info-item-label">Remaining Seats</div>
+                      <div class="info-item-value">${ev.seats_remaining} / ${ev.seats_total}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Club Info -->
+              <div class="detail-section">
+                <h2 style="font-family:\'DM Serif Display\',serif;font-size:1.4rem;margin-bottom:1rem">Organised by</h2>
+                <div class="club-card">
+                  <div class="club-card-logo" style="background:${ev.club_color || 'var(--brand-primary)'}20">
+                    🏛️
+                  </div>
+                  <div>
+                    <div style="font-weight:600;color:var(--text-primary)">${ev.club}</div>
+                    <div style="font-size:.8rem;color:var(--text-muted)">INSAT Student Club</div>
+                  </div>
+                  <a href="#" class="btn btn-ghost btn-sm" style="margin-left:auto">Follow</a>
+                </div>
+              </div>
+
+              <!-- Location Map Placeholder -->
+              <div class="detail-section">
+                <h2 style="font-family:\'DM Serif Display\',serif;font-size:1.4rem;margin-bottom:1rem">Location</h2>
+                <div class="map-placeholder">
+                  <div class="map-placeholder-content">
+                    <div class="icon">🗺️</div>
+                    <strong style="color:var(--text-secondary)">${ev.location}</strong>
+                    <p style="font-size:.78rem;margin-top:4px">
+                      <a href="https://maps.google.com/?q=${encodeURIComponent(ev.location)}" target="_blank" rel="noopener noreferrer" style="color:var(--brand-primary)">Open in Google Maps →</a>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Chat Room & Calendar -->
+              <div class="detail-section">
+                <h2 style="font-family:\'DM Serif Display\',serif;font-size:1.4rem;margin-bottom:1rem">Connect</h2>
+                <div style="display:flex;flex-direction:column;gap:.75rem">
+                  <div class="chat-cta">
+                    <div>
+                      <div style="font-weight:600;font-size:.9rem">💬 Event Chat Room</div>
+                      <div style="font-size:.78rem;color:var(--text-muted)">Join the conversation with other attendees</div>
+                    </div>
+                    <a href="#" class="btn btn-secondary btn-sm">Join Chat</a>
+                  </div>
+                  <div class="chat-cta">
+                    <div>
+                      <div style="font-weight:600;font-size:.9rem">📅 Add to Calendar</div>
+                      <div style="font-size:.78rem;color:var(--text-muted)">Sync this event to Google Calendar</div>
+                    </div>
+                    <a href="${gcalUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">Add →</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- RIGHT: Sticky Sidebar -->
+            <div>
+              <div class="sticky-sidebar">
+                <!-- Countdown -->
+                <div>
+                  <div style="font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:.75rem">Event starts in</div>
+                  <div class="countdown-grid" id="countdown-grid"></div>
+                </div>
+
+                <hr style="border:none;border-top:1px solid var(--border)"/>
+
+                <!-- Price -->
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <div>
+                    <div style="font-size:.78rem;color:var(--text-muted);margin-bottom:2px">Entry Fee</div>
+                    <div style="font-family:\'DM Serif Display\',serif;font-size:1.6rem">${isFree ? '<span style="color:var(--success)">Free</span>' : `<span>${ev.price} <small style="font-size:1rem">TND</small></span>`}</div>
+                  </div>
+                  ${isFree ? '<span class="badge badge-green">No Cost</span>' : ''}
+                </div>
+
+                <!-- Seats bar -->
+                <div>
+                  <div class="seats-bar-label" style="font-size:.8rem">
+                    <span style="font-weight:600;color:var(--text-primary)">${seats.label}</span>
+                    <span style="color:var(--text-muted)">${ev.seats_total} total</span>
+                  </div>
+                  <div class="seats-bar-track" style="height:8px;margin-top:6px">
+                    <div class="seats-bar-fill ${seats.fillClass}" style="width:${seats.pct}%"></div>
+                  </div>
+                </div>
+
+                <!-- Register CTA -->
+                <button
+                  id="register-btn"
+                  class="btn btn-accent btn-full btn-xl"
+                  onclick="window.INSAT.registerForEvent(${ev.id})"
+                  ${isFull ? 'disabled' : ''}
+                  aria-label="${isFull ? 'Event fully booked' : 'Register for ' + ev.title}"
+                >
+                  ${isFull ? '😔 Fully Booked' : '🎟️ Register Now'}
+                </button>
+
+                ${!isFull ? `
+                  <p style="font-size:.75rem;color:var(--text-muted);text-align:center">
+                    Free cancellation up to 24h before the event
+                  </p>
+                ` : ''}
+
+                <!-- Google Calendar -->
+                <a href="${gcalUrl}" target="_blank" rel="noopener noreferrer"
+                   class="btn btn-ghost btn-full btn-sm"
+                   style="justify-content:center;gap:6px">
+                  📅 Add to Google Calendar
+                </a>
+              </div>
+            </div>
+          </div>
+        `;
+
+        // Start countdown
+        window.INSAT.startCountdown(ev.date, '#countdown-grid');
+
+      } catch (err) {
+        root.innerHTML = `
+          <div class="empty-state" style="padding:5rem 0">
+            <div class="empty-state-icon">⚠️</div>
+            <div class="empty-state-title">Event not found</div>
+            <p class="empty-state-desc">${err.message}</p>
+            <a href="index.html" class="btn btn-primary" style="margin-top:1rem">← Back to events</a>
+          </div>
+        `;
+      }
+    });
+  </script>
+</body>
+</html>
