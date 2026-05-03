@@ -1,61 +1,43 @@
-header{
-    background-color: brown;
-    height:90px;
-    margin: 0;
-    padding: 0;
+.home-section {
+    background-image: url("../../public/assets/insat.jpg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    height: 100vh;
+    display: block;
+    position: relative;
 }
-.logo{
-    width: 50px;
-    height: 50px;
-    margin: 0 20px;
-    border-radius: 30px;
-}
-.nav-link {
-    color: white;
-    margin-right: 10px;
-}
-.nav-link:hover{
-    color: black;
-    text-decoration: underline;
-}
-.nav-link.link-secondary {
-    color: white;
-}
-.text-end button{
-    margin-right: 15px;
-}
-.galerie{
-    height:60vh;
+
+.overlay {
+    background-color: rgba(0,0,0,0.4);
+    height: 100%;
     width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
 }
-.carousel-inner {
-    height: 100%;
-}
-.carousel-item {
-    height: 100%;
-}
-footer{
-    background-color: brown;
-    padding: 24px 0px;
-    margin-top: 3rem;
-}
-footer .nav-link {
+
+.hero-content {
+    position: relative;
+    z-index: 5;
     color: white;
-    padding: 4px 8px;
-    font-size: 0.9rem;
+    padding: 100px 30px;
 }
-footer .nav-link:hover {
-    color: #ddd;
-    text-decoration: underline;
+.home-section {
+      background-image: url("../../public/assets/insat.jpg");
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+header {
+      z-index: 10;
 }
-footer p {
-    color: white;
-    font-size: 12px;
-    margin-top: 8px;
-    margin-bottom: 0;
-}
-.cart-insat{
-    width: 30vw ;
-    margin-left: 28vw;
-    height: 20vh;
+
+img.img-fluid {
+      max-width: 100%;
+      height: auto;
 }

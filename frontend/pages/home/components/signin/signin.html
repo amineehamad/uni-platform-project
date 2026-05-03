@@ -1,0 +1,42 @@
+<link rel="stylesheet" href="./components/signin/signin.css">
+
+<div id="signinModal" class="signin-modal">
+  <div class="signin-modal-wrapper">
+    <div class="signin-modal-content">
+      <div class="signin-modal-header">
+        <div>
+          <h5 class="signin-modal-title">Sign In</h5>
+          <p class="signin-modal-subtitle">Welcome Back</p>
+        </div>
+        <button type="button" id="closeSigninModal" class="signin-modal-close">×</button>
+      </div>
+      <div class="signin-modal-body">
+        <form id="signinForm">
+          <div class="signin-form-group">
+            <label class="signin-form-label">Email</label>
+            <input type="email" name="email" placeholder="your.email@insat.ucar.tn" class="signin-form-input" required>
+          </div>
+          <div class="signin-form-group">
+            <label class="signin-form-label" >Password</label>
+            <input name="password" type="password" placeholder="••••••••" class="signin-form-input" required>
+          </div>
+          <div class="signin-form-remember">
+            <input type="checkbox" id="rememberMe">
+            <label for="rememberMe">Remember me</label>
+          </div>
+          <button type="submit" class="signin-form-submit-btn">Sign In</button>
+          <p class="signin-form-footer">
+            Don't have an account?
+            <a href="#" class="signin-signup-link" onclick="switchToSignup(event)">Sign up</a>
+          </p>
+        </form>
+        <div id="toastError" class="toast position-fixed top-0 end-0 m-3">
+      <div class="toast-header">
+        <strong class="me-auto text-danger">Error</strong>
+      </div>
+      <div class="toast-body"></div>
+    </div>
+      </div>
+    </div>
+  </div>
+</div>
