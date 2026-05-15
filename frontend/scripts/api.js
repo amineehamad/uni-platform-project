@@ -128,9 +128,9 @@ const EventsAPI = {
     return api.post(ENDPOINTS.registerEvent(id), {});
   },
 
-  /** POST /events/{id}/cancel */
+  /** DELETE /events/{id}/register */
   cancel(id) {
-    return api.post(ENDPOINTS.cancelEvent(id), {});
+    return api.delete(ENDPOINTS.cancelEvent(id));
   },
 };
 
@@ -257,9 +257,19 @@ const MOCK_EVENTS = [
 const MOCK_USER_EVENTS = [MOCK_EVENTS[0], MOCK_EVENTS[2]];
 
 // ── Data Fetching with Mock Fallback ────────────────────────
+function normalizeBackendResponse(response) {
+  if (response == null) return { data: [] };
+  if (Array.isArray(response)) return { data: response };
+  if (response.events) return { data: response.events };
+  if (response.event) return { data: response.event };
+  if (response.data) return { data: response.data };
+  return { data: response };
+}
+
 async function getEvents(params = {}) {
   try {
-    return await EventsAPI.list(params);
+    const res = await EventsAPI.list(params);
+    return normalizeBackendResponse(res);
   } catch {
     // Return mock data with simulated filter
     let data = [...MOCK_EVENTS];
@@ -278,7 +288,8 @@ async function getEvents(params = {}) {
 
 async function getEvent(id) {
   try {
-    return await EventsAPI.get(id);
+    const res = await EventsAPI.get(id);
+    return normalizeBackendResponse(res);
   } catch {
     const event = MOCK_EVENTS.find(e => e.id === parseInt(id));
     if (!event) throw new Error('Event not found');
@@ -288,7 +299,8 @@ async function getEvent(id) {
 
 async function getUserEvents() {
   try {
-    return await UserAPI.myEvents();
+    const res = await UserAPI.myEvents();
+    return normalizeBackendResponse(res);
   } catch {
     return { data: MOCK_USER_EVENTS.map(e => ({ ...e, ticket_id: `TKT-${Math.random().toString(36).slice(2,8).toUpperCase()}`, points: 150 })) };
   }

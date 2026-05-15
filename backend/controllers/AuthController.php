@@ -4,6 +4,7 @@ require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../utils/Validator.php';
 require_once __DIR__ . '/../utils/Response.php';
 require_once __DIR__ . '/../utils/JWT.php';
+require_once __DIR__ . '/../middleware/AuthMiddleware.php';
 
 class AuthController {
 
@@ -122,6 +123,11 @@ class AuthController {
         Response::success('Authenticated user.', ['user' => $this->userModel->publicProfile($user)]);
     }
 
+    public function logout(): void {
+        $this->requireAuth();
+        Response::success('Logged out successfully.');
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
     private function getJsonBody(): array {
         $raw = file_get_contents('php://input');
@@ -133,15 +139,6 @@ class AuthController {
     }
 
     private function requireAuth(): array {
-        $header = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
-        if (!str_starts_with($header, 'Bearer ')) {
-            Response::error('Unauthorized. Token required.', 401);
-        }
-        $token   = substr($header, 7);
-        $payload = JWT::verify($token);
-        if (!$payload) {
-            Response::error('Invalid or expired token.', 401);
-        }
-        return $payload;
+        return AuthMiddleware::handle();
     }
 }

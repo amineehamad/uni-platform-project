@@ -1,0 +1,13 @@
+{
+  "name": "insat-socket-server",
+  "version": "1.0.0",
+  "description": "Socket.IO server for INSAT Events realtime chat",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "socket.io": "4.6.1",
+    "mysql2": "^3.6.0"
+  }
+}

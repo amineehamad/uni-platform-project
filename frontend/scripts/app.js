@@ -163,6 +163,83 @@ function createEventCard(event) {
   return card;
 }
 
+const ACHIEVEMENT_STORAGE_KEY = 'insat_achievements_unlocked';
+
+function getAchievementDefinitions() {
+  return [
+    {
+      key: 'first_timer',
+      title: 'First Timer',
+      message: 'You unlocked First Timer! Registered for your first event.',
+      condition: ({ eventCount }) => eventCount >= 1,
+    },
+    {
+      key: 'on_a_roll',
+      title: 'On a Roll',
+      message: 'You unlocked On a Roll! Keep attending events.',
+      condition: ({ totalPoints }) => totalPoints >= 300,
+    },
+    {
+      key: 'club_mvp',
+      title: 'Club MVP',
+      message: 'You unlocked Club MVP! You are a top event attendee.',
+      condition: ({ totalPoints }) => totalPoints >= 500,
+    },
+    {
+      key: 'social_butterfly',
+      title: 'Social Butterfly',
+      message: 'You unlocked Social Butterfly! Registered for 5 events.',
+      condition: ({ eventCount }) => eventCount >= 5,
+    },
+  ];
+}
+
+function loadUnlockedAchievements() {
+  try {
+    const raw = localStorage.getItem(ACHIEVEMENT_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveUnlockedAchievements(keys) {
+  localStorage.setItem(ACHIEVEMENT_STORAGE_KEY, JSON.stringify(keys));
+}
+
+function markAchievementChips(unlockedKeys) {
+  document.querySelectorAll('.achievement-chip[data-achievement]').forEach(chip => {
+    const key = chip.dataset.achievement;
+    const unlocked = unlockedKeys.includes(key);
+    chip.classList.toggle('unlocked', unlocked);
+    chip.style.opacity = unlocked ? '1' : '0.4';
+  });
+}
+
+function checkAchievements(stats) {
+  const definitions = getAchievementDefinitions();
+  const unlocked = loadUnlockedAchievements();
+  const newUnlocks = [];
+
+  definitions.forEach(def => {
+    if (def.condition(stats) && !unlocked.includes(def.key)) {
+      unlocked.push(def.key);
+      newUnlocks.push(def);
+    }
+  });
+
+  if (newUnlocks.length > 0) {
+    saveUnlockedAchievements(unlocked);
+    newUnlocks.forEach(def => {
+      if (window.INSAT?.Toast?.success) {
+        window.INSAT.Toast.success(`🏆 ${def.title} unlocked! ${def.message}`, 5000);
+      }
+    });
+  }
+
+  markAchievementChips(unlocked);
+}
+
 // ── Events Grid ─────────────────────────────────────────────
 async function renderEventsGrid(containerId, params = {}) {
   const container = document.getElementById(containerId);
@@ -244,14 +321,26 @@ async function renderRecommendedRow(containerId) {
   }
 }
 
+const EventFilters = {
+  category: '',
+  search: '',
+};
+
+function getActiveEventFilters() {
+  const params = {};
+  if (EventFilters.category) params.category = EventFilters.category;
+  if (EventFilters.search) params.search = EventFilters.search;
+  return params;
+}
+
 // ── Filter Chips ─────────────────────────────────────────────
 function initFilterChips(eventsContainerId) {
   document.querySelectorAll('.chip[data-filter]').forEach(chip => {
     chip.addEventListener('click', () => {
       document.querySelectorAll('.chip[data-filter]').forEach(c => c.classList.remove('active'));
       chip.classList.add('active');
-      const category = chip.dataset.filter === 'all' ? {} : { category: chip.dataset.filter };
-      renderEventsGrid(eventsContainerId, category);
+      EventFilters.category = chip.dataset.filter === 'all' ? '' : chip.dataset.filter;
+      renderEventsGrid(eventsContainerId, getActiveEventFilters());
     });
   });
 }
@@ -265,8 +354,8 @@ function initSearch(eventsContainerId) {
   searchInput.addEventListener('input', () => {
     clearTimeout(debounce);
     debounce = setTimeout(() => {
-      const q = searchInput.value.trim();
-      renderEventsGrid(eventsContainerId, q ? { search: q } : {});
+      EventFilters.search = searchInput.value.trim();
+      renderEventsGrid(eventsContainerId, getActiveEventFilters());
     }, 400);
   });
 }
@@ -496,6 +585,8 @@ async function renderMyEvents() {
       }
     }
 
+    checkAchievements({ totalPoints, eventCount: events.length });
+
     // Cancel buttons
     container.querySelectorAll('[data-cancel]').forEach(btn => {
       btn.addEventListener('click', async () => {
@@ -531,6 +622,9 @@ document.addEventListener('DOMContentLoaded', () => {
   initScrollProgress();
   initNavbar();
 
+  // Init chat widget wiring
+  if (typeof initChatWidget === 'function') initChatWidget();
+
   // Theme toggle buttons
   document.querySelectorAll('.theme-toggle').forEach(btn => {
     btn.addEventListener('click', () => Theme.toggle());
@@ -540,7 +634,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const page = document.body.dataset.page;
 
   if (page === 'home') {
-    renderEventsGrid('events-grid');
+    renderEventsGrid('events-grid', getActiveEventFilters());
     renderRecommendedRow('recommended-row');
     initFilterChips('events-grid');
     initSearch('events-grid');
@@ -550,6 +644,179 @@ document.addEventListener('DOMContentLoaded', () => {
     renderMyEvents();
   }
 });
+
+// ---------------------- Chat / Socket.IO client ----------------------
+let __insat_socket = null;
+function createChatWidgetDom() {
+  if (document.getElementById('chat-widget')) return;
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = `
+    <div id="chat-widget" style="position:fixed;right:18px;bottom:18px;width:360px;max-width:90%;background:var(--bg-surface);border:1px solid var(--border);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.12);display:none;flex-direction:column;overflow:hidden;z-index:1200;font-family:Inter,system-ui,sans-serif">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--border);background:var(--bg-muted)">
+        <div>
+          <div style="font-weight:700;font-size:.95rem;letter-spacing:.01em">Event Chat</div>
+          <div id="chat-room-status" style="font-size:.77rem;color:var(--text-muted);margin-top:2px">Connected attendees only</div>
+        </div>
+        <button id="chat-close" class="btn btn-ghost btn-sm">✖</button>
+      </div>
+      <div id="chat-messages" style="padding:12px;max-height:320px;overflow:auto;display:flex;flex-direction:column;gap:10px;background:var(--bg-surface)"></div>
+      <div style="display:flex;gap:10px;padding:12px;border-top:1px solid var(--border);background:var(--bg-muted)">
+        <input id="chat-input" type="text" placeholder="Write a message..." style="flex:1;padding:10px;border:1px solid var(--border);border-radius:12px;background:var(--bg-body);color:var(--text-primary);" />
+        <button id="chat-send" class="btn btn-primary btn-sm">Send</button>
+      </div>
+    </div>`;
+  document.body.appendChild(wrapper);
+}
+
+function initChatWidget() {
+  createChatWidgetDom();
+  const connectBtn = document.getElementById('socket-connect-btn');
+  const chatWidget = document.getElementById('chat-widget');
+  const chatClose = document.getElementById('chat-close');
+  const chatSend = document.getElementById('chat-send');
+  const chatInput = document.getElementById('chat-input');
+  const chatMessages = document.getElementById('chat-messages');
+
+  function addMessage(msg, own = false) {
+    if (!chatMessages) return;
+    const el = document.createElement('div');
+    el.style.maxWidth = '80%';
+    el.style.padding = '8px';
+    el.style.borderRadius = '8px';
+    el.style.background = own ? 'rgba(59,130,246,.12)' : 'var(--bg-muted)';
+    el.style.alignSelf = own ? 'flex-end' : 'flex-start';
+    el.innerHTML = `<div style="font-size:.78rem;font-weight:600;margin-bottom:4px">${escapeHtml(msg.from || 'Anonymous')}</div><div style="font-size:.9rem">${escapeHtml(msg.text)}</div>`;
+    chatMessages.appendChild(el);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function ensureSocket() {
+    if (typeof io === 'undefined') {
+      console.warn('Socket.IO client not loaded');
+      return null;
+    }
+    if (__insat_socket && __insat_socket.connected) return __insat_socket;
+    const url = window.SOCKET_SERVER_URL || 'http://localhost:3000';
+    __insat_socket = io(url, { reconnectionAttempts: 2, timeout: 5000 });
+    __insat_socket.on('connect', () => {
+      if (window.INSAT?.Toast?.success) window.INSAT.Toast.success('Chat connected');
+      const user = window.INSAT?.Auth?.getUser?.() || { name: 'Guest', id: null };
+      const eventId = getCurrentEventId();
+      __insat_socket.emit('join', { user: user.name || 'Guest', user_id: user.id || null, event_id: eventId });
+    });
+    __insat_socket.on('message', (m) => addMessage(m, false));
+    __insat_socket.on('history', (arr) => {
+      try {
+        if (chatMessages) chatMessages.innerHTML = '';
+        (arr || []).forEach(m => addMessage(m, false));
+      } catch (e) { console.warn('history render error', e); }
+    });
+    __insat_socket.on('disconnect', () => {
+      if (window.INSAT?.Toast?.info) window.INSAT.Toast.info('Chat disconnected');
+    });
+    __insat_socket.on('not_allowed', (payload) => {
+      if (window.INSAT?.Toast?.error) window.INSAT.Toast.error(payload?.message || 'Access denied to this chat');
+      if (chatWidget) chatWidget.style.display = 'none';
+      if (connectBtn) { connectBtn.textContent = 'Connect Chat'; connectBtn.disabled = false; }
+    });
+    return __insat_socket;
+  }
+
+  // Support both direct button and delegated clicks if button is inserted later
+  function onConnectClicked(btnEl) {
+    if (!btnEl) return;
+    if (!window.INSAT?.Auth?.isLoggedIn?.() ) {
+      const redirectPath = window.location.pathname + window.location.search;
+      window.location.href = 'login.html?redirect=' + encodeURIComponent(redirectPath);
+      return;
+    }
+    const eventId = getCurrentEventId();
+    if (!eventId) {
+      if (window.INSAT?.Toast?.error) window.INSAT.Toast.error('Event chat is only available from an event details page.');
+      return;
+    }
+    btnEl.textContent = 'Connecting...';
+    btnEl.disabled = true;
+    if (chatWidget) chatWidget.style.display = 'flex';
+    const s = ensureSocket();
+    if (!s) {
+      if (window.INSAT?.Toast?.error) window.INSAT.Toast.error('Chat failed to start');
+      btnEl.textContent = 'Connect Chat';
+      btnEl.disabled = false;
+      return;
+    }
+    // once connected (or already connected) update UI
+    if (s.connected) {
+      btnEl.textContent = 'Connected';
+      focusChatInput();
+    } else {
+      s.once('connect', () => { btnEl.textContent = 'Connected'; focusChatInput(); });
+      s.once('connect_error', () => { btnEl.textContent = 'Connect Chat'; btnEl.disabled = false; });
+    }
+  }
+
+  connectBtn?.addEventListener('click', () => onConnectClicked(connectBtn));
+  document.addEventListener('click', (e) => {
+    const target = e.target.closest && e.target.closest('#socket-connect-btn');
+    if (target) onConnectClicked(target);
+  });
+
+  function focusChatInput() {
+    setTimeout(() => {
+      chatInput?.focus();
+    }, 120);
+  }
+
+  chatClose?.addEventListener('click', () => {
+    if (chatWidget) chatWidget.style.display = 'none';
+    if (__insat_socket) {
+      __insat_socket.disconnect();
+      __insat_socket = null;
+      if (connectBtn) { connectBtn.textContent = 'Connect Chat'; connectBtn.disabled = false; }
+    }
+  });
+
+  chatSend?.addEventListener('click', () => {
+    const text = chatInput?.value?.trim();
+    if (!text) return;
+    const user = window.INSAT?.Auth?.getUser?.() || { name: 'Guest' };
+    const payload = {
+      from: user.name || user.first_name || 'Guest',
+      text,
+      event_id: getCurrentEventId(),
+      user_id: getCurrentUserId(),
+    };
+    if (__insat_socket && __insat_socket.connected) {
+      __insat_socket.emit('message', payload);
+      addMessage(payload, true);
+      chatInput.value = '';
+    } else {
+      if (window.INSAT?.Toast?.error) window.INSAT.Toast.error('Not connected to chat');
+    }
+  });
+
+  chatInput?.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') chatSend?.click(); });
+}
+
+function getCurrentUserId() {
+  const user = window.INSAT?.Auth?.getUser?.();
+  if (!user) return null;
+  return user.id || user.user_id || null;
+}
+
+function getCurrentEventId() {
+  // sources: explicit global variable, body dataset, or query param `id`
+  if (window.EVENT_CHAT_ID) return window.EVENT_CHAT_ID;
+  const bodyId = document.body?.dataset?.eventId;
+  if (bodyId) return bodyId;
+  const q = new URLSearchParams(window.location.search).get('id');
+  return q || null;
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/[&<>\"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[m]; });
+}
 
 // ── Exports ──────────────────────────────────────────────────
 window.INSAT = window.INSAT || {};

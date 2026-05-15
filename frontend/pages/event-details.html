@@ -83,6 +83,8 @@
 
   <script src="../scripts/api.js"></script>
   <script src="../scripts/auth.js"></script>
+  <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+  <script>window.SOCKET_SERVER_URL = 'http://localhost:3001';</script>
   <script src="../scripts/app.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
@@ -209,7 +211,7 @@
                       <div style="font-weight:600;font-size:.9rem">💬 Event Chat Room</div>
                       <div style="font-size:.78rem;color:var(--text-muted)">Join the conversation with other attendees</div>
                     </div>
-                    <a href="#" class="btn btn-secondary btn-sm">Join Chat</a>
+                    <button id="socket-connect-btn" class="btn btn-secondary btn-sm">Connect Chat</button>
                   </div>
                   <div class="chat-cta">
                     <div>
@@ -280,6 +282,8 @@
             </div>
           </div>
         `;
+        document.body.dataset.eventId = ev.id;
+        window.EVENT_CHAT_ID = ev.id;
 
         // Start countdown
         window.INSAT.startCountdown(ev.date, '#countdown-grid');

@@ -28,6 +28,14 @@
       background: var(--bg-muted);
       border-radius: var(--r-md);
       font-size: .82rem;
+      transition: transform var(--dur-fast), border-color var(--dur-fast), background var(--dur-fast), color var(--dur-fast), opacity var(--dur-fast);
+    }
+    .achievement-chip.unlocked {
+      border: 1px solid var(--brand-primary);
+      background: rgba(59,130,246,.12);
+      color: var(--brand-primary);
+      opacity: 1 !important;
+      transform: translateY(-1px);
     }
     .tab-btn {
       padding: 7px 16px;
@@ -45,6 +53,8 @@
       color: var(--text-primary);
       box-shadow: var(--shadow-xs);
     }
+    /* Chat widget styles (minimal) */
+    .chat-widget-hidden { display: none !important; }
   </style>
 </head>
 <body data-page="my-events">
@@ -99,28 +109,28 @@
           <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:1.1rem">
             <h3 style="font-family:'DM Serif Display',serif;font-size:1rem;margin-bottom:.75rem">Achievements</h3>
             <div style="display:flex;flex-direction:column;gap:.5rem">
-              <div class="achievement-chip">
+              <div class="achievement-chip" data-achievement="first_timer">
                 <span style="font-size:1.1rem">🎯</span>
                 <div>
                   <div style="font-weight:600;color:var(--text-primary)">First Timer</div>
                   <div style="font-size:.72rem;color:var(--text-muted)">Registered for 1 event</div>
                 </div>
               </div>
-              <div class="achievement-chip" style="opacity:.4">
+              <div class="achievement-chip" data-achievement="on_a_roll" style="opacity:.4">
                 <span style="font-size:1.1rem">🔥</span>
                 <div>
                   <div style="font-weight:600;color:var(--text-primary)">On a Roll</div>
                   <div style="font-size:.72rem;color:var(--text-muted)">Attend 3 events in a row</div>
                 </div>
               </div>
-              <div class="achievement-chip" style="opacity:.4">
+              <div class="achievement-chip" data-achievement="club_mvp" style="opacity:.4">
                 <span style="font-size:1.1rem">🌟</span>
                 <div>
                   <div style="font-weight:600;color:var(--text-primary)">Club MVP</div>
                   <div style="font-size:.72rem;color:var(--text-muted)">Earn 500+ points</div>
                 </div>
               </div>
-              <div class="achievement-chip" style="opacity:.4">
+              <div class="achievement-chip" data-achievement="social_butterfly" style="opacity:.4">
                 <span style="font-size:1.1rem">🤝</span>
                 <div>
                   <div style="font-weight:600;color:var(--text-primary)">Social Butterfly</div>
@@ -175,6 +185,8 @@
 
   <script src="../scripts/api.js"></script>
   <script src="../scripts/auth.js"></script>
+  <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+  <script>window.SOCKET_SERVER_URL = 'http://localhost:3001';</script>
   <script src="../scripts/app.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
