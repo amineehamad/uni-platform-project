@@ -5,5 +5,6 @@ RewriteEngine On
 # Route all requests to index.php (except existing files/directories)
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^ index.php [
+RewriteRule ^ index.php [L,QSA]
+
     

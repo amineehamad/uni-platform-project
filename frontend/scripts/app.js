@@ -77,6 +77,32 @@ function initNavbar() {
       el.textContent = user.first_name || 'My Account';
     });
   }
+
+  // Update navbar points
+  updateNavbarPoints();
+}
+
+// Update points display in navbar
+async function updateNavbarPoints() {
+  if (!window.INSAT?.Auth?.isLoggedIn()) return;
+  
+  try {
+    const res = await window.INSAT.getUserEvents();
+    const events = res?.data || res || [];
+    
+    let totalPoints = 0;
+    events.forEach(ev => {
+      const isPast = new Date(ev.date) < Date.now();
+      const points = ev.points || (isPast ? 150 : 0);
+      totalPoints += points;
+    });
+    
+    document.querySelectorAll('#nav-points-count').forEach(el => {
+      el.textContent = totalPoints;
+    });
+  } catch (err) {
+    console.warn('Failed to update navbar points:', err);
+  }
 }
 
 // ── Event Card Renderer ─────────────────────────────────────
@@ -391,7 +417,7 @@ function startCountdown(targetDate, selector) {
 }
 
 // ── QR Code Modal ────────────────────────────────────────────
-function showQRModal(event, ticketId) {
+function showQRModal(event, ticketId, onClose) {
   const existing = document.getElementById('qr-modal');
   if (existing) existing.remove();
 
@@ -422,9 +448,12 @@ function showQRModal(event, ticketId) {
     </div>
   `;
 
-  const close = () => overlay.remove();
+  const close = () => {
+    overlay.remove();
+    if (onClose) onClose();
+  };
   overlay.querySelector('.modal-close').addEventListener('click', close);
-  document.getElementById('close-qr-btn')?.addEventListener('click', close);
+  overlay.querySelector('#close-qr-btn')?.addEventListener('click', close);
   overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
 
   document.body.appendChild(overlay);
@@ -489,10 +518,12 @@ async function registerForEvent(eventId) {
     const res = await window.INSAT.EventsAPI.register(eventId);
     window.INSAT.Toast.success('🎉 Registered successfully!');
 
-    // Show QR modal
+    // Show QR modal with callback to refresh page when closed
     const eventRes = await window.INSAT.getEvent(eventId);
     const event = eventRes?.data || eventRes;
-    showQRModal(event, res?.ticket_id);
+    showQRModal(event, res?.ticket_id, () => {
+      window.location.reload();
+    });
 
     if (btn) {
       btn.textContent = '✅ Registered';
@@ -585,6 +616,9 @@ async function renderMyEvents() {
       }
     }
 
+    // Update navbar points
+    updateNavbarPoints();
+
     checkAchievements({ totalPoints, eventCount: events.length });
 
     // Cancel buttons
@@ -676,6 +710,38 @@ function initChatWidget() {
   const chatSend = document.getElementById('chat-send');
   const chatInput = document.getElementById('chat-input');
   const chatMessages = document.getElementById('chat-messages');
+  
+  const getCacheKey = () => `chat_history_${getCurrentEventId()}`;
+  
+  function saveMessageToCache(msg) {
+    try {
+      const key = getCacheKey();
+      const cached = JSON.parse(localStorage.getItem(key) || '[]');
+      // Avoid duplicates
+      if (!cached.find(m => m.id === msg.id)) {
+        cached.push(msg);
+        // Keep only last 100 messages
+        if (cached.length > 100) cached.shift();
+        localStorage.setItem(key, JSON.stringify(cached));
+      }
+    } catch (e) { console.warn('cache save error', e); }
+  }
+  
+  function loadCachedMessages() {
+    try {
+      const key = getCacheKey();
+      const cached = JSON.parse(localStorage.getItem(key) || '[]');
+      const user = window.INSAT?.Auth?.getUser?.() || {};
+      if (chatMessages) chatMessages.innerHTML = '';
+      cached.forEach(m => {
+        const isOwn = user.id && m.user_id && user.id === m.user_id;
+        addMessageOnce(m, isOwn);
+      });
+    } catch (e) { console.warn('cache load error', e); }
+  }
+  
+  // Load cached messages on init
+  loadCachedMessages();
 
   function addMessage(msg, own = false) {
     if (!chatMessages) return;
@@ -688,6 +754,56 @@ function initChatWidget() {
     el.innerHTML = `<div style="font-size:.78rem;font-weight:600;margin-bottom:4px">${escapeHtml(msg.from || 'Anonymous')}</div><div style="font-size:.9rem">${escapeHtml(msg.text)}</div>`;
     chatMessages.appendChild(el);
     chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function addMessageOnce(msg, own = false) {
+    if (!chatMessages) return;
+    
+    // Convert ID to string for consistent handling
+    const msgId = String(msg.id);
+    
+    // For messages with real IDs, check if already displayed
+    if (msgId && !msgId.startsWith('temp_')) {
+      const existing = chatMessages?.querySelector(`[data-msg-id="${msgId}"]`);
+      if (existing) return;
+    }
+    
+    // For temp messages coming back from server with real ID, update the existing element
+    if (msgId && !msgId.startsWith('temp_')) {
+      const tempElement = chatMessages?.querySelector('[data-msg-id^="temp_"]');
+      if (tempElement && own) {
+        tempElement.dataset.msgId = msgId;
+        return;
+      }
+    }
+    
+    const el = document.createElement('div');
+    el.dataset.msgId = msgId;
+    el.style.maxWidth = '80%';
+    el.style.padding = '10px 12px';
+    el.style.borderRadius = '12px';
+    el.style.wordWrap = 'break-word';
+    el.style.display = 'flex';
+    el.style.flexDirection = 'column';
+    
+    if (own) {
+      el.style.background = 'var(--brand-primary, #1a56e8)';
+      el.style.color = '#fff';
+      el.style.alignSelf = 'flex-end';
+    } else {
+      el.style.background = 'var(--bg-muted)';
+      el.style.color = 'var(--text-primary)';
+      el.style.alignSelf = 'flex-start';
+    }
+    
+    el.innerHTML = `<div style="font-size:.78rem;font-weight:600;margin-bottom:4px;opacity:0.9">${escapeHtml(msg.from || 'Anonymous')}</div><div style="font-size:.9rem">${escapeHtml(msg.text)}</div>`;
+    chatMessages.appendChild(el);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    
+    // Save to cache
+    if (msgId && !msgId.startsWith('temp_')) {
+      saveMessageToCache(msg);
+    }
   }
 
   function ensureSocket() {
@@ -704,11 +820,25 @@ function initChatWidget() {
       const eventId = getCurrentEventId();
       __insat_socket.emit('join', { user: user.name || 'Guest', user_id: user.id || null, event_id: eventId });
     });
-    __insat_socket.on('message', (m) => addMessage(m, false));
+    __insat_socket.on('message', (m) => {
+      const user = window.INSAT?.Auth?.getUser?.() || {};
+      const isOwn = user.id && m.user_id && user.id === m.user_id;
+      addMessageOnce(m, isOwn);
+      // Save to cache
+      if (m.id && !m.id.startsWith('temp_')) {
+        saveMessageToCache(m);
+      }
+    });
     __insat_socket.on('history', (arr) => {
       try {
         if (chatMessages) chatMessages.innerHTML = '';
-        (arr || []).forEach(m => addMessage(m, false));
+        const user = window.INSAT?.Auth?.getUser?.() || {};
+        (arr || []).forEach(m => {
+          const isOwn = user.id && m.user_id && user.id === m.user_id;
+          addMessageOnce(m, isOwn);
+          // Save to cache
+          saveMessageToCache(m);
+        });
       } catch (e) { console.warn('history render error', e); }
     });
     __insat_socket.on('disconnect', () => {
@@ -787,8 +917,9 @@ function initChatWidget() {
       user_id: getCurrentUserId(),
     };
     if (__insat_socket && __insat_socket.connected) {
+      // Display message immediately on the right
+      addMessageOnce({ ...payload, id: `temp_${Date.now()}` }, true);
       __insat_socket.emit('message', payload);
-      addMessage(payload, true);
       chatInput.value = '';
     } else {
       if (window.INSAT?.Toast?.error) window.INSAT.Toast.error('Not connected to chat');

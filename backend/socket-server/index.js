@@ -73,19 +73,24 @@ io.on('connection', (socket) => {
     try {
       const eventId = msg.event_id || null;
       const userId = msg.user_id || null;
+      console.log('Message received:', { userId, eventId, from: msg.from, text: msg.text });
       if (!eventId) {
+        console.log('No event ID provided');
         socket.emit('not_allowed', { message: 'Event chat requires an event ID.' });
         return;
       }
       const ok = await isRegistered(userId, eventId);
+      console.log('Registration check:', { userId, eventId, ok });
       if (!ok) {
+        console.log('User not registered for event');
         socket.emit('not_allowed', { message: 'You are not registered for this event.' });
         return;
       }
       const saved = await saveMessage({ user_id: msg.user_id || null, event_id: eventId, user_name: msg.from || 'Anonymous', text: msg.text });
-      const payload = { id: saved.id, event_id: eventId, from: saved.user_name, text: saved.text, ts: saved.ts };
+      const payload = { id: saved.id, user_id: saved.user_id, event_id: eventId, from: saved.user_name, text: saved.text, ts: saved.ts };
       const room = `event_${eventId}`;
-      socket.to(room).emit('message', payload);
+      console.log('Broadcasting message to room', room, payload);
+      io.to(room).emit('message', payload);
     } catch (err) {
       console.error('save message error', err);
     }
