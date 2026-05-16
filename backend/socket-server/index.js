@@ -85,7 +85,7 @@ io.on('connection', (socket) => {
       const saved = await saveMessage({ user_id: msg.user_id || null, event_id: eventId, user_name: msg.from || 'Anonymous', text: msg.text });
       const payload = { id: saved.id, event_id: eventId, from: saved.user_name, text: saved.text, ts: saved.ts };
       const room = `event_${eventId}`;
-      io.to(room).emit('message', payload);
+      socket.to(room).emit('message', payload);
     } catch (err) {
       console.error('save message error', err);
     }
